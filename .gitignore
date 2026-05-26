@@ -1,0 +1,11 @@
+.venv/
+node_modules/
+.next/
+.pytest_cache/
+__pycache__/
+*.pyc
+*.egg-info/
+tsconfig.tsbuildinfo
+.env
+.env.local
+.superpowers/
