@@ -5,11 +5,7 @@
     "buildCommand": "pip install ."
   },
   "deploy": {
-<<<<<<< HEAD
-    "preDeployCommand": ".venv/bin/python -m alembic upgrade head && .venv/bin/python -m app.seed",
-=======
     "preDeployCommand": "python -m alembic upgrade head && python -m app.seed",
->>>>>>> e370d59e558acc475ebf46a3616648d667ea9baf
     "startCommand": "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 300,
