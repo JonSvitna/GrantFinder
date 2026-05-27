@@ -81,21 +81,13 @@ ENVIRONMENT=production
 1. Create a Railway project.
 2. Add a PostgreSQL service.
 3. Add the backend service from this repository.
-4. Set the backend root directory to `apps/api`.
-5. Set `DATABASE_URL`, `CORS_ORIGINS`, and `ENVIRONMENT`.
-6. Run migrations:
-
-```bash
-python3 -m alembic upgrade head
-```
-
-7. Seed MVP records:
-
-```bash
-python3 -m app.seed
-```
-
+4. Set the backend root directory to `/apps/api`.
+5. Set the Railway config file path to `/apps/api/railway.json`.
+6. Set `DATABASE_URL`, `CORS_ORIGINS`, and `ENVIRONMENT`.
+7. Deploy. The backend `railway.json` runs migrations and seed data through the pre-deploy command.
 8. Confirm `GET /health` returns `{"status":"ok"}`.
+
+The backend start command is pinned in `apps/api/railway.json` because the FastAPI app lives at `app.main:app`, while Railpack's default FastAPI detection expects a root-level `main:app`.
 
 ## Vercel Deployment
 
