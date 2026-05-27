@@ -66,6 +66,13 @@ Frontend on Vercel:
 
 ```text
 NEXT_PUBLIC_API_BASE_URL=https://your-railway-api-url
+NEXT_PUBLIC_SITE_URL=https://your-vercel-domain.vercel.app
+NEXT_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+SUPABASE_SERVICE_ROLE_KEY=eyJ...
+STRIPE_SECRET_KEY=sk_live_...
+STRIPE_FOUNDER_PRICE_ID=price_...
+ADMIN_EMAILS=you@example.com
 ```
 
 Backend on Railway:
@@ -74,7 +81,37 @@ Backend on Railway:
 DATABASE_URL=postgresql+psycopg://...
 CORS_ORIGINS=https://your-vercel-domain.vercel.app,http://localhost:3000
 ENVIRONMENT=production
+STRIPE_WEBHOOK_SECRET=whsec_...
+SUPABASE_JWT_SECRET=your-jwt-secret
+ADMIN_EMAILS=you@example.com
 ```
+
+## Founder Access MVP
+
+Founder Access adds a dual-tier landing page, Stripe Checkout ($19/mo), Supabase magic-link auth, wizard paywall with blurred preview, 50-seat cap, and gated dashboard routes.
+
+### Supabase setup
+
+1. Create a Supabase project and enable Email auth (magic links).
+2. Authentication → URL Configuration:
+   - Site URL: production Vercel URL and `http://localhost:3000` for local dev
+   - Redirect URLs: `http://localhost:3000/auth/callback` and `https://<your-domain>/auth/callback`
+3. Copy Project URL, anon key, and JWT secret (`SUPABASE_JWT_SECRET` on Railway).
+
+### Stripe setup
+
+1. Create a **Founder Access** product with a **$19/month** recurring price.
+2. Add webhook endpoint: `https://<railway-api-host>/api/webhooks/stripe`
+3. Events: `checkout.session.completed`, `customer.subscription.updated`, `customer.subscription.deleted`
+4. Copy webhook signing secret and price ID into env vars.
+
+### Launch verification checklist
+
+1. Submit waitlist on landing → lead appears in `/admin/leads`
+2. Complete wizard anonymously → blurred paywall at `/wizard/unlock`
+3. Checkout with Stripe test card `4242 4242 4242 4242` → webhook assigns `founder_number`
+4. Magic link login → full dashboard at `/dashboard`
+5. With 50 active founders in DB → checkout returns 409 (sold out)
 
 ## Railway Deployment
 
@@ -119,8 +156,7 @@ The backend start command is pinned in `apps/api/railway.json` because the FastA
 
 ## Future Roadmap
 
-- Supabase Auth or equivalent real authentication
-- Role-based admin access
+- Role-based admin access beyond email allowlist
 - Admin editing for sources, programs, documents, and matching rules
 - Scraper/indexer jobs for Maryland state, county, SAM.gov, IRS, SBA, utility, and workforce sources
 - AI document ingestion for PDFs and long source pages

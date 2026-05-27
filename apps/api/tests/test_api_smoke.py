@@ -32,7 +32,7 @@ def test_programs_and_documents_list_endpoints_return_seeded_data():
     assert len(documents.json()) >= 13
 
 
-def test_profile_submission_returns_dashboard_payload():
+def test_profile_submission_returns_preview_payload():
     client = TestClient(app)
     payload = {
         "email": "owner@example.com",
@@ -59,7 +59,7 @@ def test_profile_submission_returns_dashboard_payload():
 
     assert response.status_code == 200
     body = response.json()
+    assert body["preview"] is True
     assert body["user"]["email"] == "owner@example.com"
-    assert "readiness" in body
-    assert len(body["matches"]) > 0
-    assert len(body["tasks"]) > 0
+    assert "categories" in body
+    assert "matches" not in body

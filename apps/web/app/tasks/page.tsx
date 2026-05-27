@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AppShell } from "@/components/app-shell";
-import { api } from "@/lib/api";
+import { AuthenticatedShell } from "@/components/authenticated-shell";
+import { api, getAccessToken } from "@/lib/api";
 import type { TaskItem } from "@/lib/types";
 
 export default function TasksPage() {
@@ -11,22 +11,32 @@ export default function TasksPage() {
   const [message, setMessage] = useState("");
 
   useEffect(() => {
-    const userId = localStorage.getItem("smbfn_user_id");
-    if (!userId) {
-      setMessage("Complete the wizard first to generate tasks.");
-      return;
+    async function loadTasks() {
+      const userId = localStorage.getItem("smbfn_user_id");
+      const token = await getAccessToken();
+      if (!userId) {
+        setMessage("Complete the wizard first to generate tasks.");
+        return;
+      }
+      try {
+        const dashboard = await api.getDashboard(userId, token || undefined);
+        setTasks(dashboard.tasks);
+      } catch {
+        setMessage("Tasks are unavailable.");
+      }
     }
-    api.getDashboard(userId).then((dashboard) => setTasks(dashboard.tasks)).catch(() => setMessage("Tasks are unavailable."));
+    loadTasks();
   }, []);
 
   async function toggleTask(task: TaskItem) {
+    const token = await getAccessToken();
     const nextStatus = task.status === "complete" ? "open" : "complete";
-    const updated = await api.updateTask(task.id, { status: nextStatus });
+    const updated = await api.updateTask(task.id, { status: nextStatus }, token || undefined);
     setTasks((current) => current.map((item) => (item.id === task.id ? updated : item)));
   }
 
   return (
-    <AppShell>
+    <AuthenticatedShell>
       <div style={{ display: "grid", gap: 20 }}>
         <header>
           <h1 style={{ marginBottom: 8 }}>Saved checklist and tasks</h1>
@@ -35,7 +45,9 @@ export default function TasksPage() {
         {message ? (
           <div className="panel" style={{ padding: 20 }}>
             <p style={{ color: "var(--muted)" }}>{message}</p>
-            <Link className="button-primary" href="/wizard">Start wizard</Link>
+            <Link className="button-primary" href="/wizard">
+              Start wizard
+            </Link>
           </div>
         ) : null}
         <section style={{ display: "grid", gap: 12 }}>
@@ -52,6 +64,6 @@ export default function TasksPage() {
           ))}
         </section>
       </div>
-    </AppShell>
+    </AuthenticatedShell>
   );
 }

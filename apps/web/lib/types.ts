@@ -95,3 +95,48 @@ export interface DashboardPayload {
   saved_items: Array<Record<string, string>>;
   priority_actions: TaskItem[];
 }
+
+export interface PreviewDashboardPayload {
+  preview: true;
+  user: { id: string; email: string };
+  categories: Array<{ key: string; label: string; reason: string }>;
+  spots_remaining: number;
+  cap_reached: boolean;
+}
+
+export type ProfileSubmitResponse = DashboardPayload | PreviewDashboardPayload;
+
+export interface WaitlistInput {
+  email: string;
+  first_name: string;
+  source: "landing_hero" | "landing_footer" | "paywall" | "founder_page";
+}
+
+export interface WaitlistLead {
+  email: string;
+  first_name: string;
+  source: string;
+}
+
+export interface AdminLead {
+  email: string;
+  first_name: string;
+  source: string;
+  created_at: string;
+}
+
+export interface AdminFoundersResponse {
+  seat_count: number;
+  cap: number;
+  founders: Array<{
+    founder_number: number;
+    email: string;
+    first_name: string | null;
+    subscription_status: string;
+    subscribed_at: string | null;
+  }>;
+}
+
+export function isPreviewResponse(response: ProfileSubmitResponse): response is PreviewDashboardPayload {
+  return "preview" in response && response.preview === true;
+}

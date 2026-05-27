@@ -2,7 +2,9 @@
 
 Date: 2026-05-27  
 Status: Approved design  
-FigJam: [SMB Funding Navigator — Founder Access MVP](https://www.figma.com/board/ajGXOQcJVvylVO9PtQoZRy)
+FigJam (flow + architecture): [SMB Funding Navigator — Founder Access MVP](https://www.figma.com/board/ajGXOQcJVvylVO9PtQoZRy)  
+Figma Design (screens): [SMB Funding Navigator — Founder Access Screens](https://www.figma.com/design/z7GTV3blc0MVceWDkud46Y)  
+Open Design (interactive prototype): http://127.0.0.1:55924/ — use `saas-landing` + `dashboard` skills with Stripe/Vercel design system
 
 ## Goal
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AppShell } from "@/components/app-shell";
+import { AuthenticatedShell } from "@/components/authenticated-shell";
 import { ProgramCard } from "@/components/cards";
 import { api } from "@/lib/api";
 import type { Program } from "@/lib/types";
@@ -17,11 +17,13 @@ export default function FundingPage() {
   }, []);
 
   return (
-    <AppShell>
+    <AuthenticatedShell>
       <div style={{ display: "grid", gap: 20 }}>
         <header>
           <h1 style={{ marginBottom: 8 }}>Funding matches and readiness programs</h1>
-          <p style={{ color: "var(--muted)", lineHeight: 1.55 }}>Explore Maryland-first grants, loans, procurement steps, rebates, and support categories.</p>
+          <p style={{ color: "var(--muted)", lineHeight: 1.55 }}>
+            Explore Maryland-first grants, loans, procurement steps, rebates, and support categories.
+          </p>
         </header>
         <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>
           {categories.map((category) => (
@@ -31,9 +33,11 @@ export default function FundingPage() {
           ))}
         </div>
         <section style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
-          {visible.map((program) => <ProgramCard key={program.id} program={program} />)}
+          {visible.map((program) => (
+            <ProgramCard key={program.id} program={program} />
+          ))}
         </section>
       </div>
-    </AppShell>
+    </AuthenticatedShell>
   );
 }

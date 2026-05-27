@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     database_url: str = "postgresql+psycopg://postgres:postgres@localhost:5432/grantfinder"
     cors_origins: str = "http://localhost:3000"
     environment: str = "local"
+    stripe_webhook_secret: str = ""
+    supabase_jwt_secret: str = ""
+    admin_emails: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
