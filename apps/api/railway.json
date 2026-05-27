@@ -4,7 +4,7 @@
     "builder": "RAILPACK"
   },
   "deploy": {
-    "preDeployCommand": "uv run alembic upgrade head && uv run python -m app.seed",
+    "preDeployCommand": ".venv/bin/python -m alembic upgrade head && .venv/bin/python -m app.seed",
     "startCommand": "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}",
     "healthcheckPath": "/health",
     "healthcheckTimeout": 300,
