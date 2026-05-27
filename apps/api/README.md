@@ -47,7 +47,22 @@ CORS_ORIGINS=https://your-vercel-domain.vercel.app,http://localhost:3000
 ENVIRONMENT=production
 ```
 
-After deploy, run:
+Railway service settings:
+
+```text
+Root Directory=/apps/api
+Config File=/apps/api/railway.json
+```
+
+The `railway.json` file sets:
+
+```text
+preDeployCommand=python -m alembic upgrade head && python -m app.seed
+startCommand=uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}
+healthcheckPath=/health
+```
+
+If you need to run the deploy steps manually:
 
 ```bash
 python3 -m alembic upgrade head
