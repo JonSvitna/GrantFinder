@@ -1,9 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import type { ProfilePayload } from "@/lib/types";
+import { isPreviewResponse } from "@/lib/types";
+
+const DRAFT_KEY = "smbfn_wizard_draft";
+const PREVIEW_KEY = "smbfn_unlock_preview";
 
 const counties = ["Baltimore City", "Baltimore County", "Montgomery County", "Prince George's County", "Anne Arundel County", "Frederick County", "Howard County", "Other Maryland county"];
 const fundingNeeds = ["startup capital", "working capital", "equipment", "hiring", "training", "marketing", "real estate", "energy savings", "government contracting"];
@@ -50,6 +54,28 @@ export function WizardForm() {
     []
   );
 
+  useEffect(() => {
+    const raw = localStorage.getItem(DRAFT_KEY);
+    if (!raw) {
+      return;
+    }
+    try {
+      const draft = JSON.parse(raw) as { step?: number; profile?: ProfilePayload };
+      if (draft.profile) {
+        setProfile(draft.profile);
+      }
+      if (typeof draft.step === "number") {
+        setStep(Math.min(Math.max(draft.step, 0), steps.length - 1));
+      }
+    } catch {
+      // Ignore malformed draft payloads.
+    }
+  }, [steps.length]);
+
+  useEffect(() => {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ step, profile }));
+  }, [step, profile]);
+
   function update<K extends keyof ProfilePayload>(key: K, value: ProfilePayload[K]) {
     setProfile((current) => ({ ...current, [key]: value }));
   }
@@ -70,8 +96,17 @@ export function WizardForm() {
     setError("");
     setIsSubmitting(true);
     try {
-      const dashboard = await api.submitProfile(profile);
-      localStorage.setItem("smbfn_user_id", dashboard.user.id);
+      const response = await api.submitProfile(profile);
+      localStorage.setItem("smbfn_user_id", response.user.id);
+
+      if (isPreviewResponse(response)) {
+        sessionStorage.setItem(PREVIEW_KEY, JSON.stringify(response));
+        router.push("/wizard/unlock");
+        return;
+      }
+
+      localStorage.removeItem(DRAFT_KEY);
+      sessionStorage.removeItem(PREVIEW_KEY);
       router.push("/dashboard");
     } catch (err) {
       setError(err instanceof Error ? err.message : "We could not generate your plan.");

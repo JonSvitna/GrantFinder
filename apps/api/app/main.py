@@ -1,7 +1,10 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.api.admin_billing import router as admin_billing_router
+from app.api.billing import router as billing_router
 from app.api.routes import router as api_router
+from app.api.waitlist import router as waitlist_router
 from app.config import get_settings
 
 
@@ -17,6 +20,9 @@ app.add_middleware(
 )
 
 app.include_router(api_router)
+app.include_router(waitlist_router)
+app.include_router(billing_router)
+app.include_router(admin_billing_router)
 
 
 @app.get("/health")

@@ -22,8 +22,31 @@ class User(TimestampMixin, Base):
 
     id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
     email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
+    first_name: Mapped[str | None] = mapped_column(String, nullable=True)
+    supabase_user_id: Mapped[str | None] = mapped_column(String, unique=True, nullable=True, index=True)
+    stripe_customer_id: Mapped[str | None] = mapped_column(String, unique=True, nullable=True, index=True)
+    stripe_subscription_id: Mapped[str | None] = mapped_column(String, unique=True, nullable=True, index=True)
+    subscription_status: Mapped[str] = mapped_column(String, nullable=False, default="none", index=True)
+    founder_number: Mapped[int | None] = mapped_column(Integer, unique=True, nullable=True, index=True)
+    founder_locked_price: Mapped[str] = mapped_column(String, nullable=False, default="19.00")
+    subscribed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
     profile: Mapped["BusinessProfile"] = relationship(back_populates="user", uselist=False)
+
+
+class WaitlistLead(TimestampMixin, Base):
+    __tablename__ = "waitlist_leads"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=new_id)
+    email: Mapped[str] = mapped_column(String, unique=True, index=True, nullable=False)
+    first_name: Mapped[str] = mapped_column(String, nullable=False)
+    source: Mapped[str] = mapped_column(String, nullable=False)
+
+
+class StripeEvent(TimestampMixin, Base):
+    __tablename__ = "stripe_events"
+
+    id: Mapped[str] = mapped_column(String, primary_key=True)
 
 
 class BusinessProfile(TimestampMixin, Base):

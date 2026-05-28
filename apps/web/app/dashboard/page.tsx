@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AppShell } from "@/components/app-shell";
+import { AuthenticatedShell } from "@/components/authenticated-shell";
 import { Disclaimer } from "@/components/disclaimer";
 import { ProgramCard, TaskRow } from "@/components/cards";
 import { ScoreBar } from "@/components/score-bar";
-import { api } from "@/lib/api";
+import { api, getAccessToken } from "@/lib/api";
 import type { DashboardPayload } from "@/lib/types";
 
 export default function DashboardPage() {
@@ -14,12 +14,20 @@ export default function DashboardPage() {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    const userId = localStorage.getItem("smbfn_user_id");
-    if (!userId) {
-      setError("Complete the wizard first so we can build your dashboard.");
-      return;
+    async function loadDashboard() {
+      const userId = localStorage.getItem("smbfn_user_id");
+      const token = await getAccessToken();
+      if (!userId) {
+        setError("Complete the wizard first so we can build your dashboard.");
+        return;
+      }
+      try {
+        setDashboard(await api.getDashboard(userId, token || undefined));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Dashboard unavailable.");
+      }
     }
-    api.getDashboard(userId).then(setDashboard).catch((err) => setError(err instanceof Error ? err.message : "Dashboard unavailable."));
+    loadDashboard();
   }, []);
 
   const scores = dashboard
@@ -30,7 +38,7 @@ export default function DashboardPage() {
     : [];
 
   return (
-    <AppShell>
+    <AuthenticatedShell>
       <div style={{ display: "grid", gap: 22 }}>
         <header>
           <h1 style={{ marginBottom: 8 }}>Readiness dashboard</h1>
@@ -39,7 +47,9 @@ export default function DashboardPage() {
         {error ? (
           <div className="panel" style={{ padding: 20 }}>
             <p style={{ color: "var(--muted)" }}>{error}</p>
-            <Link className="button-primary" href="/wizard">Start wizard</Link>
+            <Link className="button-primary" href="/wizard">
+              Start wizard
+            </Link>
           </div>
         ) : null}
         {dashboard ? (
@@ -53,26 +63,32 @@ export default function DashboardPage() {
               <div className="panel" style={{ padding: 18 }}>
                 <h2 style={{ marginTop: 0 }}>Missing paperwork</h2>
                 <ul style={{ color: "var(--muted)", lineHeight: 1.8 }}>
-                  {dashboard.readiness.missing_paperwork.map((item) => <li key={item}>{item}</li>)}
+                  {dashboard.readiness.missing_paperwork.map((item) => (
+                    <li key={item}>{item}</li>
+                  ))}
                 </ul>
               </div>
               <div className="panel" style={{ padding: 18 }}>
                 <h2 style={{ marginTop: 0 }}>Priority actions</h2>
                 <div style={{ display: "grid", gap: 10 }}>
-                  {dashboard.priority_actions.slice(0, 3).map((task) => <TaskRow key={task.id} task={task} />)}
+                  {dashboard.priority_actions.slice(0, 3).map((task) => (
+                    <TaskRow key={task.id} task={task} />
+                  ))}
                 </div>
               </div>
             </section>
             <section>
               <h2>Top matches</h2>
               <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
-                {dashboard.matches.slice(0, 3).map((match) => <ProgramCard key={match.program.id} program={match.program} />)}
+                {dashboard.matches.slice(0, 3).map((match) => (
+                  <ProgramCard key={match.program.id} program={match.program} />
+                ))}
               </div>
             </section>
             <Disclaimer />
           </>
         ) : null}
       </div>
-    </AppShell>
+    </AuthenticatedShell>
   );
 }

@@ -31,3 +31,9 @@ class SavedItemInput(BaseModel):
 
 class TaskUpdateInput(BaseModel):
     status: str
+
+
+class WaitlistInput(BaseModel):
+    email: EmailStr
+    first_name: str = Field(min_length=1, max_length=100)
+    source: str = Field(pattern=r"^(landing_hero|landing_footer|paywall|founder_page)$")

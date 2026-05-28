@@ -1,19 +1,33 @@
 import Link from "next/link";
 import { AppShell } from "@/components/app-shell";
 import { Disclaimer } from "@/components/disclaimer";
+import { FounderTierCard } from "@/components/founder-tier-card";
+import { WaitlistForm } from "@/components/waitlist-form";
+import { fetchBillingCap } from "@/lib/subscription";
 
-export default function HomePage() {
+export default async function HomePage() {
+  let spotsRemaining = 50;
+  let capReached = false;
+
+  try {
+    const cap = await fetchBillingCap();
+    spotsRemaining = cap.spots_remaining;
+    capReached = cap.cap_reached;
+  } catch {
+    // Landing still renders if cap endpoint is unavailable.
+  }
+
   return (
     <AppShell>
-      <section style={{ display: "grid", gap: 24, padding: "48px 0" }}>
+      <section style={{ display: "grid", gap: 24, padding: "48px 0 32px" }}>
         <div style={{ display: "grid", gap: 18, maxWidth: 780 }}>
           <span style={{ color: "var(--green)", fontWeight: 800 }}>Maryland-first business guidance</span>
           <h1 style={{ color: "var(--navy)", fontSize: "clamp(40px, 7vw, 72px)", lineHeight: 1, margin: 0 }}>
             Find funding and paperwork steps without decoding government pages alone.
           </h1>
           <p style={{ color: "var(--muted)", fontSize: 20, lineHeight: 1.55, margin: 0 }}>
-            SMB Funding Navigator helps Maryland founders and small business owners identify likely funding, incentives,
-            procurement readiness steps, and forms to review next.
+            SMB Funding Navigator helps Maryland founders identify likely funding, incentives, procurement readiness steps,
+            and forms to review next.
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
             <Link className="button-primary" href="/wizard">
@@ -24,6 +38,20 @@ export default function HomePage() {
             </Link>
           </div>
         </div>
+      </section>
+
+      <section style={{ display: "grid", gap: 18, gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", marginBottom: 32 }}>
+        <article className="panel" style={{ display: "grid", gap: 16, padding: 24 }}>
+          <span style={{ color: "var(--green)", fontSize: 13, fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase" }}>
+            Free waitlist
+          </span>
+          <h2 style={{ margin: 0 }}>Get launch updates</h2>
+          <p style={{ color: "var(--muted)", lineHeight: 1.55, margin: 0 }}>
+            Join the waitlist for Maryland funding guidance, new program alerts, and paperwork explainers.
+          </p>
+          <WaitlistForm source="landing_hero" />
+        </article>
+        <FounderTierCard capReached={capReached} spotsRemaining={spotsRemaining} />
       </section>
 
       <section style={{ display: "grid", gap: 16, gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", marginBottom: 28 }}>
@@ -37,6 +65,23 @@ export default function HomePage() {
             <p style={{ color: "var(--muted)", lineHeight: 1.55, marginBottom: 0 }}>{copy}</p>
           </article>
         ))}
+      </section>
+
+      <section className="panel" style={{ display: "grid", gap: 16, marginBottom: 28, padding: 24 }}>
+        <h2 style={{ marginTop: 0 }}>How it works</h2>
+        <ol style={{ color: "var(--muted)", display: "grid", gap: 10, lineHeight: 1.6, margin: 0, paddingLeft: 20 }}>
+          <li>Complete the wizard with your business profile and paperwork status.</li>
+          <li>See a blurred preview of your readiness categories.</li>
+          <li>Unlock Founder Access for full matches, tasks, and your dashboard.</li>
+        </ol>
+      </section>
+
+      <section className="panel" style={{ display: "grid", gap: 16, marginBottom: 28, padding: 24 }}>
+        <h2 style={{ marginTop: 0 }}>Stay in the loop</h2>
+        <p style={{ color: "var(--muted)", lineHeight: 1.55, margin: 0 }}>
+          Not ready for Founder Access? Join the free waitlist and we will email you when new Maryland guidance ships.
+        </p>
+        <WaitlistForm compact source="landing_footer" />
       </section>
 
       <Disclaimer />

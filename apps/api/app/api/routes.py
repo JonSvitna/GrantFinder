@@ -7,6 +7,7 @@ from sqlalchemy import delete, select
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
 
+from app.auth import get_current_user_optional
 from app.database import get_db
 from app.errors import not_found
 from app.models import BusinessProfile, Document, MatchResult, Program, SavedItem, Source, Task, User
@@ -14,6 +15,7 @@ from app.schemas import ProfileInput, SavedItemInput, TaskUpdateInput
 from app.seed import DOCUMENT_SEEDS, PROGRAM_SEEDS, SOURCE_SEEDS
 from app.services.matching import generate_matches
 from app.services.readiness import calculate_readiness
+from app.services.subscriptions import FOUNDER_CAP, active_founder_count, spots_remaining
 from app.services.tasks import generate_tasks
 
 router = APIRouter(prefix="/api")
@@ -160,6 +162,23 @@ def saved_from_model(item: SavedItem) -> dict:
     }
 
 
+def build_preview_response(user: User | dict, readiness: dict, db: Session | None = None) -> dict:
+    categories = []
+    for key, value in readiness.items():
+        if key == "missing_paperwork":
+            continue
+        categories.append({"key": key, "label": value["label"], "reason": value["reason"]})
+    count = active_founder_count(db) if db is not None else 0
+    user_payload = user if isinstance(user, dict) else {"id": user.id, "email": user.email}
+    return {
+        "preview": True,
+        "user": user_payload,
+        "categories": categories,
+        "spots_remaining": spots_remaining(count),
+        "cap_reached": count >= FOUNDER_CAP,
+    }
+
+
 @router.get("/programs")
 def list_programs(db: Session = Depends(get_db)) -> list[dict]:
     try:
@@ -211,15 +230,19 @@ def get_document(document_id: str, db: Session = Depends(get_db)) -> dict:
 
 
 @router.post("/profiles")
-def submit_profile(profile: ProfileInput, db: Session = Depends(get_db)) -> dict:
+def submit_profile(
+    profile: ProfileInput,
+    db: Session = Depends(get_db),
+    auth_user: User | None = Depends(get_current_user_optional),
+) -> dict:
     try:
-        return submit_profile_db(profile, db)
+        return submit_profile_db(profile, db, auth_user)
     except SQLAlchemyError:
         db.rollback()
-        return submit_profile_memory(profile)
+        return submit_profile_memory(profile, auth_user)
 
 
-def submit_profile_memory(profile: ProfileInput) -> dict:
+def submit_profile_memory(profile: ProfileInput, auth_user: User | None = None) -> dict:
     email = profile.email.lower()
     user_id = USERS_BY_EMAIL.get(email) or str(uuid.uuid4())
     USERS_BY_EMAIL[email] = user_id
@@ -243,10 +266,14 @@ def submit_profile_memory(profile: ProfileInput) -> dict:
         "priority_actions": tasks[:5],
     }
 
+    gate_user = auth_user
+    if auth_user is None or auth_user.subscription_status != "active":
+        return build_preview_response(USERS[user_id], readiness, db=None)
+
     return DASHBOARDS[user_id]
 
 
-def submit_profile_db(profile: ProfileInput, db: Session) -> dict:
+def submit_profile_db(profile: ProfileInput, db: Session, auth_user: User | None = None) -> dict:
     email = profile.email.lower()
     user = db.scalar(select(User).where(User.email == email)) or User(email=email)
     db.add(user)
@@ -288,6 +315,11 @@ def submit_profile_db(profile: ProfileInput, db: Session) -> dict:
 
     tasks = [task_from_model(task) for task in db.scalars(select(Task).where(Task.user_id == user.id)).all()]
     saved_items = [saved_from_model(item) for item in db.scalars(select(SavedItem).where(SavedItem.user_id == user.id)).all()]
+
+    effective_user = auth_user or user
+    if effective_user.subscription_status != "active":
+        return build_preview_response(effective_user, readiness, db)
+
     return {
         "user": {"id": user.id, "email": user.email},
         "profile": {**raw_profile, "user_id": user.id},
