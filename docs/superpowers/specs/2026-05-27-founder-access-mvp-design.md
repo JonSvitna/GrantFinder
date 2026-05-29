@@ -142,6 +142,8 @@ Middleware calls `GET /me/subscription` with JWT; cache result ~5 minutes.
 
 **Landing `/`**
 
+> **Note:** Hero tier-card layout superseded by universal landing spec (2026-05-28). See [2026-05-28-universal-landing-page-design.md](./2026-05-28-universal-landing-page-design.md).
+
 - Dual-tier hero: free waitlist form + Founder card with live spots counter.
 - Primary CTA: **Find Funding & Paperwork Steps** → `/wizard`.
 - Header: **Log in** (magic link) + **Become a Founder**.

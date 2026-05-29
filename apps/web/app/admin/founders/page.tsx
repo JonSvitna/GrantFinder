@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AppShell } from "@/components/app-shell";
+import { AdminShell } from "@/components/admin-shell";
+import { AdminKpiCard, AdminKpiGrid, AdminTable, cellStyle } from "@/components/admin-ui";
 import { api, getAccessToken } from "@/lib/api";
-import type { AdminFoundersResponse } from "@/lib/types";
+import type { AdminFoundersResponse, AdminLead, Source } from "@/lib/types";
 
 export default function AdminFoundersPage() {
   const [data, setData] = useState<AdminFoundersResponse | null>(null);
+  const [leads, setLeads] = useState<AdminLead[]>([]);
+  const [sources, setSources] = useState<Source[]>([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -18,7 +21,14 @@ export default function AdminFoundersPage() {
         return;
       }
       try {
-        setData(await api.getAdminFounders(token));
+        const [founderRows, leadRows, sourceRows] = await Promise.all([
+          api.getAdminFounders(token),
+          api.getAdminLeads(token),
+          api.getAdminSources(token),
+        ]);
+        setData(founderRows);
+        setLeads(leadRows);
+        setSources(sourceRows);
       } catch {
         setError("Could not load founder roster.");
       }
@@ -27,50 +37,36 @@ export default function AdminFoundersPage() {
   }, []);
 
   return (
-    <AppShell>
-      <div style={{ display: "grid", gap: 20 }}>
-        <header style={{ alignItems: "center", display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "space-between" }}>
-          <div>
-            <h1 style={{ marginBottom: 8 }}>Founder roster</h1>
-            <p style={{ color: "var(--muted)", lineHeight: 1.55, margin: 0 }}>
-              {data ? `${data.seat_count}/${data.cap} seats filled` : "Loading seat count..."}
-            </p>
-          </div>
-          <Link className="button-secondary" href="/admin/leads">
-            View waitlist leads
-          </Link>
-        </header>
-        {error ? <div style={{ color: "#b42318", fontWeight: 700 }}>{error}</div> : null}
-        <section className="panel" style={{ overflow: "auto" }}>
-          <table style={{ borderCollapse: "collapse", minWidth: 760, width: "100%" }}>
-            <thead>
-              <tr style={{ background: "#eef5f1", textAlign: "left" }}>
-                <th style={cellStyle}>#</th>
-                <th style={cellStyle}>Email</th>
-                <th style={cellStyle}>Name</th>
-                <th style={cellStyle}>Status</th>
-                <th style={cellStyle}>Subscribed</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(data?.founders || []).map((founder) => (
-                <tr key={founder.founder_number}>
-                  <td style={cellStyle}>{founder.founder_number}</td>
-                  <td style={cellStyle}>{founder.email}</td>
-                  <td style={cellStyle}>{founder.first_name || "—"}</td>
-                  <td style={cellStyle}>{founder.subscription_status}</td>
-                  <td style={cellStyle}>{founder.subscribed_at || "—"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-      </div>
-    </AppShell>
+    <AdminShell
+      actions={
+        <Link className="button-secondary" href="/admin/leads">
+          View waitlist leads
+        </Link>
+      }
+      description={data ? `${data.seat_count}/${data.cap} seats filled` : "Loading seat count..."}
+      title="Founder roster"
+    >
+      {error ? <div style={{ color: "#b42318", fontWeight: 700 }}>{error}</div> : null}
+      <AdminKpiGrid>
+        <AdminKpiCard detail={`${leads.length} total signups`} label="Waitlist leads" value={String(leads.length)} />
+        <AdminKpiCard
+          detail={data ? `${data.cap - data.seat_count} spots left` : "Loading seats..."}
+          label="Founder seats"
+          value={data ? `${data.seat_count}/${data.cap}` : "—"}
+        />
+        <AdminKpiCard detail="Seeded Maryland data" label="Active sources" value={String(sources.length)} />
+      </AdminKpiGrid>
+      <AdminTable headers={["#", "Email", "Name", "Status", "Subscribed"]}>
+        {(data?.founders || []).map((founder) => (
+          <tr key={founder.founder_number}>
+            <td style={cellStyle}>{founder.founder_number}</td>
+            <td style={cellStyle}>{founder.email}</td>
+            <td style={cellStyle}>{founder.first_name || "—"}</td>
+            <td style={cellStyle}>{founder.subscription_status}</td>
+            <td style={cellStyle}>{founder.subscribed_at || "—"}</td>
+          </tr>
+        ))}
+      </AdminTable>
+    </AdminShell>
   );
 }
-
-const cellStyle = {
-  borderBottom: "1px solid var(--border)",
-  padding: 14,
-};

@@ -3,8 +3,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AuthenticatedShell } from "@/components/authenticated-shell";
+import { MatchRow, PriorityTaskRow } from "@/components/cards";
 import { Disclaimer } from "@/components/disclaimer";
-import { ProgramCard, TaskRow } from "@/components/cards";
 import { ScoreBar } from "@/components/score-bar";
 import { api, getAccessToken } from "@/lib/api";
 import type { DashboardPayload } from "@/lib/types";
@@ -39,10 +39,12 @@ export default function DashboardPage() {
 
   return (
     <AuthenticatedShell>
-      <div style={{ display: "grid", gap: 22 }}>
+      <div style={{ display: "grid", gap: 20 }}>
         <header>
-          <h1 style={{ marginBottom: 8 }}>Readiness dashboard</h1>
-          <p style={{ color: "var(--muted)", lineHeight: 1.55 }}>Your Maryland-first next steps, based on the profile you submitted.</p>
+          <h1 style={{ fontSize: 22, marginBottom: 8 }}>Readiness dashboard</h1>
+          <p style={{ color: "var(--muted)", lineHeight: 1.55, margin: 0 }}>
+            Your Maryland-first next steps, based on the profile you submitted.
+          </p>
         </header>
         {error ? (
           <div className="panel" style={{ padding: 20 }}>
@@ -54,34 +56,37 @@ export default function DashboardPage() {
         ) : null}
         {dashboard ? (
           <>
-            <section style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))" }}>
+            <section className="dashboard-score-grid">
               {scores.map(([key, value]) => (
                 <ScoreBar key={key} label={value.label} reason={value.reason} score={value.score} />
               ))}
             </section>
-            <section style={{ display: "grid", gap: 14, gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)" }}>
+            <section className="dashboard-two-col">
               <div className="panel" style={{ padding: 18 }}>
-                <h2 style={{ marginTop: 0 }}>Missing paperwork</h2>
-                <ul style={{ color: "var(--muted)", lineHeight: 1.8 }}>
+                <h2 className="dashboard-section-title">Missing paperwork</h2>
+                <div style={{ display: "grid", gap: 10 }}>
                   {dashboard.readiness.missing_paperwork.map((item) => (
-                    <li key={item}>{item}</li>
+                    <div className="missing-item" key={item}>
+                      <span className="missing-dot" />
+                      <span>{item}</span>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
               <div className="panel" style={{ padding: 18 }}>
-                <h2 style={{ marginTop: 0 }}>Priority actions</h2>
+                <h2 className="dashboard-section-title">Priority actions</h2>
                 <div style={{ display: "grid", gap: 10 }}>
                   {dashboard.priority_actions.slice(0, 3).map((task) => (
-                    <TaskRow key={task.id} task={task} />
+                    <PriorityTaskRow key={task.id} task={task} />
                   ))}
                 </div>
               </div>
             </section>
-            <section>
-              <h2>Top matches</h2>
-              <div style={{ display: "grid", gap: 14, gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
+            <section className="panel" style={{ padding: 18 }}>
+              <h2 className="dashboard-section-title">Top matches</h2>
+              <div style={{ display: "grid", gap: 10 }}>
                 {dashboard.matches.slice(0, 3).map((match) => (
-                  <ProgramCard key={match.program.id} program={match.program} />
+                  <MatchRow key={match.program.id} match={match} />
                 ))}
               </div>
             </section>

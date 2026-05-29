@@ -2,30 +2,40 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AppShell } from "@/components/app-shell";
+import { AdminShell } from "@/components/admin-shell";
+import { AdminKpiCard, AdminKpiGrid, AdminTable, PhaseTwoNote, cellStyle } from "@/components/admin-ui";
 import { api, getAccessToken } from "@/lib/api";
-import type { AdminLead } from "@/lib/types";
+import type { AdminFoundersResponse, AdminLead, Source } from "@/lib/types";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
 export default function AdminLeadsPage() {
   const [leads, setLeads] = useState<AdminLead[]>([]);
+  const [founders, setFounders] = useState<AdminFoundersResponse | null>(null);
+  const [sources, setSources] = useState<Source[]>([]);
   const [error, setError] = useState("");
 
   useEffect(() => {
-    async function loadLeads() {
+    async function loadAdminData() {
       const token = await getAccessToken();
       if (!token) {
         setError("Sign in with an admin account to view leads.");
         return;
       }
       try {
-        setLeads(await api.getAdminLeads(token));
+        const [leadRows, founderRows, sourceRows] = await Promise.all([
+          api.getAdminLeads(token),
+          api.getAdminFounders(token),
+          api.getAdminSources(token),
+        ]);
+        setLeads(leadRows);
+        setFounders(founderRows);
+        setSources(sourceRows);
       } catch {
         setError("Could not load waitlist leads.");
       }
     }
-    loadLeads();
+    loadAdminData();
   }, []);
 
   async function downloadCsv() {
@@ -50,51 +60,41 @@ export default function AdminLeadsPage() {
   }
 
   return (
-    <AppShell>
-      <div style={{ display: "grid", gap: 20 }}>
-        <header style={{ alignItems: "center", display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "space-between" }}>
-          <div>
-            <h1 style={{ marginBottom: 8 }}>Waitlist leads</h1>
-            <p style={{ color: "var(--muted)", lineHeight: 1.55, margin: 0 }}>Export and review free waitlist signups.</p>
-          </div>
-          <div style={{ display: "flex", gap: 10 }}>
-            <button className="button-primary" onClick={downloadCsv} type="button">
-              Download CSV
-            </button>
-            <Link className="button-secondary" href="/admin/founders">
-              View founders
-            </Link>
-          </div>
-        </header>
-        {error ? <div style={{ color: "#b42318", fontWeight: 700 }}>{error}</div> : null}
-        <section className="panel" style={{ overflow: "auto" }}>
-          <table style={{ borderCollapse: "collapse", minWidth: 720, width: "100%" }}>
-            <thead>
-              <tr style={{ background: "#eef5f1", textAlign: "left" }}>
-                <th style={cellStyle}>Email</th>
-                <th style={cellStyle}>First name</th>
-                <th style={cellStyle}>Source</th>
-                <th style={cellStyle}>Created</th>
-              </tr>
-            </thead>
-            <tbody>
-              {leads.map((lead) => (
-                <tr key={`${lead.email}-${lead.created_at}`}>
-                  <td style={cellStyle}>{lead.email}</td>
-                  <td style={cellStyle}>{lead.first_name}</td>
-                  <td style={cellStyle}>{lead.source}</td>
-                  <td style={cellStyle}>{lead.created_at}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-      </div>
-    </AppShell>
+    <AdminShell
+      actions={
+        <>
+          <button className="button-primary" onClick={downloadCsv} type="button">
+            Download CSV
+          </button>
+          <Link className="button-secondary" href="/admin/founders">
+            View founders
+          </Link>
+        </>
+      }
+      description="Export and review free waitlist signups."
+      title="Waitlist leads"
+    >
+      {error ? <div style={{ color: "#b42318", fontWeight: 700 }}>{error}</div> : null}
+      <AdminKpiGrid>
+        <AdminKpiCard detail={`${leads.length} total signups`} label="Waitlist leads" value={String(leads.length)} />
+        <AdminKpiCard
+          detail={founders ? `${founders.cap - founders.seat_count} spots left` : "Loading seats..."}
+          label="Founder seats"
+          value={founders ? `${founders.seat_count}/${founders.cap}` : "—"}
+        />
+        <AdminKpiCard detail="Seeded Maryland data" label="Active sources" value={String(sources.length)} />
+      </AdminKpiGrid>
+      <AdminTable headers={["Email", "First name", "Source", "Created"]}>
+        {leads.map((lead) => (
+          <tr key={`${lead.email}-${lead.created_at}`}>
+            <td style={cellStyle}>{lead.email}</td>
+            <td style={cellStyle}>{lead.first_name}</td>
+            <td style={cellStyle}>{lead.source}</td>
+            <td style={cellStyle}>{lead.created_at}</td>
+          </tr>
+        ))}
+      </AdminTable>
+      <PhaseTwoNote />
+    </AdminShell>
   );
 }
-
-const cellStyle = {
-  borderBottom: "1px solid var(--border)",
-  padding: 14,
-};

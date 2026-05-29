@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { DocumentItem, Program, TaskItem } from "@/lib/types";
+import type { DocumentItem, MatchResult, Program, TaskItem } from "@/lib/types";
 
 export function ProgramCard({ program }: { program: Program }) {
   return (
@@ -38,6 +38,49 @@ export function TaskRow({ task }: { task: TaskItem }) {
       <strong>{task.title}</strong>
       <p style={{ color: "var(--muted)", lineHeight: 1.5, margin: 0 }}>{task.description}</p>
       <span style={{ color: task.status === "complete" ? "var(--green)" : "var(--blue)", fontSize: 13, fontWeight: 800 }}>{task.status}</span>
+    </div>
+  );
+}
+
+function formatTaskStatus(status: string) {
+  if (status === "complete") {
+    return "Complete";
+  }
+  if (status === "in_progress") {
+    return "In progress";
+  }
+  return "Not started";
+}
+
+function taskStatusColor(status: string) {
+  if (status === "complete") {
+    return "var(--green)";
+  }
+  if (status === "in_progress") {
+    return "var(--blue)";
+  }
+  return "var(--muted)";
+}
+
+export function PriorityTaskRow({ task }: { task: TaskItem }) {
+  return (
+    <div className="task-chip">
+      <strong style={{ fontSize: 13 }}>{task.title}</strong>
+      <span style={{ color: taskStatusColor(task.status), fontSize: 11, fontWeight: 700 }}>{formatTaskStatus(task.status)}</span>
+    </div>
+  );
+}
+
+export function MatchRow({ match }: { match: MatchResult }) {
+  return (
+    <div className="match-row">
+      <span className="match-badge">Match</span>
+      <div style={{ display: "grid", gap: 2 }}>
+        <strong style={{ fontSize: 14 }}>{match.program.name}</strong>
+        <span style={{ color: "var(--muted)", fontSize: 12 }}>
+          {match.program.funding_type} · {match.program.estimated_time}
+        </span>
+      </div>
     </div>
   );
 }

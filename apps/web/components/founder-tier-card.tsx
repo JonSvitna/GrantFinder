@@ -1,21 +1,43 @@
 import Link from "next/link";
-import { SpotsRemainingBadge } from "@/components/spots-remaining-badge";
 
 export function FounderTierCard({
   spotsRemaining,
   capReached,
+  variant = "default",
 }: {
   spotsRemaining: number;
   capReached: boolean;
+  variant?: "default" | "hero";
 }) {
+  const seatLabel = capReached ? "Sold out" : `${spotsRemaining}/50 left`;
+
+  if (variant === "hero") {
+    return (
+      <article className="landing-tier-card landing-tier-card-founder">
+        <span className="landing-tier-label">Founder Access · {seatLabel}</span>
+        <div className="landing-tier-price">$19/mo</div>
+        <p className="landing-tier-copy">Future price $49/mo — locked in for life</p>
+        <ul className="landing-tier-list">
+          <li>• Full dashboard today</li>
+          <li>• Wizard → unlock your plan</li>
+          <li>• Magic-link login</li>
+        </ul>
+        {capReached ? (
+          <Link className="button-secondary" href="/waitlist/thanks">
+            Join waitlist for next cohort
+          </Link>
+        ) : (
+          <Link className="button-primary" href="/founder/checkout">
+            Become a Founder
+          </Link>
+        )}
+      </article>
+    );
+  }
+
   return (
     <article className="panel" style={{ display: "grid", gap: 16, padding: 24 }}>
-      <div style={{ alignItems: "center", display: "flex", flexWrap: "wrap", gap: 10, justifyContent: "space-between" }}>
-        <span style={{ color: "var(--green)", fontSize: 13, fontWeight: 800, letterSpacing: "0.04em", textTransform: "uppercase" }}>
-          Founder Access
-        </span>
-        <SpotsRemainingBadge capReached={capReached} spotsRemaining={spotsRemaining} />
-      </div>
+      <span className="landing-tier-label">Founder Access · {seatLabel}</span>
       <div>
         <div style={{ alignItems: "baseline", display: "flex", gap: 10 }}>
           <span style={{ color: "var(--navy)", fontSize: 40, fontWeight: 800, lineHeight: 1 }}>$19</span>
