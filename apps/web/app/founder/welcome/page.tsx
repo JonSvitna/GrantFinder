@@ -4,7 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
-import { AuthOtpForm } from "@/components/auth-otp-form";
+import { AuthCredentialsForm } from "@/components/auth-credentials-form";
 import { createClient } from "@/lib/supabase/client";
 import { fetchSubscription } from "@/lib/subscription";
 
@@ -72,7 +72,7 @@ function FounderWelcomeContent() {
 
       if (!initialSession?.access_token) {
         setStatus("needs_sign_in");
-        setMessage("Payment confirmed — enter your sign-in code to open your dashboard.");
+        setMessage("Payment confirmed — sign in with your account to open your dashboard.");
         return;
       }
 
@@ -102,7 +102,9 @@ function FounderWelcomeContent() {
 
       if (!cancelled) {
         setStatus("timeout");
-        setMessage("Payment is still processing — refresh in a minute or enter your sign-in code below.");
+        setMessage(
+          "Payment is still processing — refresh in a minute or sign in with your account below.",
+        );
       }
     }
 
@@ -113,7 +115,7 @@ function FounderWelcomeContent() {
     };
   }, [sessionId, supabase.auth]);
 
-  const showOtpForm = status === "needs_sign_in" || status === "timeout";
+  const showCredentialsForm = status === "needs_sign_in" || status === "timeout";
 
   return (
     <AppShell>
@@ -127,10 +129,10 @@ function FounderWelcomeContent() {
           <p style={{ color: "var(--navy)", fontWeight: 800, margin: 0 }}>Founder #{founderNumber} of 50</p>
         ) : null}
 
-        {showOtpForm ? (
-          <AuthOtpForm
+        {showCredentialsForm ? (
+          <AuthCredentialsForm
             defaultEmail={prefillEmail}
-            description="We'll email you a 6-digit code. Enter it here to finish signing in — works with Gmail, Outlook, and any email app."
+            description="Sign in with your email and password, or create an account if you haven't yet."
             heading="Sign in to your dashboard"
             next="/dashboard"
           />

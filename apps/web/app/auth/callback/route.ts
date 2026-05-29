@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { resolvePostLoginPath } from "@/lib/post-login-routing";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
@@ -20,17 +19,9 @@ export async function GET(request: Request) {
     return NextResponse.redirect(`${SITE_URL}/login`);
   }
 
-  const {
-    data: { session },
-  } = await supabase.auth.getSession();
-
-  if (session?.access_token) {
-    const path = await resolvePostLoginPath({
-      next,
-      accessToken: session.access_token,
-    });
-    return NextResponse.redirect(`${SITE_URL}${path}`);
+  if (next === "/auth/reset-password") {
+    return NextResponse.redirect(`${SITE_URL}/auth/reset-password`);
   }
 
-  return NextResponse.redirect(`${SITE_URL}/login`);
+  return NextResponse.redirect(`${SITE_URL}/login?confirmed=1`);
 }

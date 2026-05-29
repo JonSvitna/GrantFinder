@@ -20,7 +20,7 @@ export function FounderTierCard({
         <ul className="landing-tier-list">
           <li>• Full dashboard today</li>
           <li>• Wizard → unlock your plan</li>
-          <li>• Magic-link login</li>
+          <li>• Email + password login</li>
         </ul>
         {capReached ? (
           <Link className="button-secondary" href="/waitlist/thanks">
@@ -51,7 +51,7 @@ export function FounderTierCard({
       <ul style={{ color: "var(--navy)", display: "grid", gap: 8, lineHeight: 1.5, margin: 0, paddingLeft: 18 }}>
         <li>Full wizard results — no blurred scores</li>
         <li>Funding matches and paperwork checklist</li>
-        <li>Magic-link login — no password to remember</li>
+        <li>Email + password login — sign in anytime</li>
       </ul>
       {capReached ? (
         <Link className="button-secondary" href="/waitlist/thanks">

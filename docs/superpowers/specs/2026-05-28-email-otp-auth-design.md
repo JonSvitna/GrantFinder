@@ -1,7 +1,7 @@
 # Email OTP Auth Design
 
 Date: 2026-05-28  
-Status: Approved design  
+Status: **Superseded** by [2026-05-28-email-password-auth-design.md](./2026-05-28-email-password-auth-design.md)  
 Supersedes: Auth portions of [2026-05-27-founder-access-mvp-design.md](./2026-05-27-founder-access-mvp-design.md) (magic link as primary login — funnel and gating unchanged)  
 Related: [2026-05-28-universal-landing-page-design.md](./2026-05-28-universal-landing-page-design.md)
 
