@@ -36,7 +36,11 @@ export function isAdminEmail(email: string | undefined | null): boolean {
   if (!email) {
     return false;
   }
-  const admins = (process.env.ADMIN_EMAILS || "")
+  const allowlist =
+    process.env.NEXT_PUBLIC_ADMIN_EMAILS ||
+    process.env.ADMIN_EMAILS ||
+    "";
+  const admins = allowlist
     .split(",")
     .map((item) => item.trim().toLowerCase())
     .filter(Boolean);

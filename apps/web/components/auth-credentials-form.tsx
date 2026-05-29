@@ -168,7 +168,11 @@ export function AuthCredentialsForm({
     }
 
     try {
-      const path = await resolvePostLoginPath({ next, accessToken: session.access_token });
+      const path = await resolvePostLoginPath({
+        next,
+        accessToken: session.access_token,
+        email: session.user.email,
+      });
       router.push(path);
     } catch {
       router.push("/founder/checkout");

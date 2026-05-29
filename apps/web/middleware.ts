@@ -30,6 +30,10 @@ export async function middleware(request: NextRequest) {
   }
 
   if (needsAuth) {
+    if (isAdminEmail(user.email)) {
+      return supabaseResponse;
+    }
+
     const {
       data: { session },
     } = await supabase.auth.getSession();
