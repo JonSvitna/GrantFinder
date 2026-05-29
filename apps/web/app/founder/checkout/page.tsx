@@ -2,12 +2,12 @@
 
 import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
 import { SpotsRemainingBadge } from "@/components/spots-remaining-badge";
 import { api } from "@/lib/api";
 import { createClient } from "@/lib/supabase/client";
-import { fetchBillingCap, isAdminEmail } from "@/lib/subscription";
+import { fetchBillingCap } from "@/lib/subscription";
 
 export default function FounderCheckoutPage() {
   return (
@@ -26,7 +26,6 @@ export default function FounderCheckoutPage() {
 }
 
 function FounderCheckoutContent() {
-  const router = useRouter();
   const searchParams = useSearchParams();
   const canceled = searchParams.get("canceled") === "1";
   const [email, setEmail] = useState("");
@@ -68,12 +67,9 @@ function FounderCheckoutContent() {
     supabase.auth.getUser().then(({ data }) => {
       if (data.user?.email) {
         setEmail((current) => current || data.user?.email || "");
-        if (isAdminEmail(data.user.email)) {
-          router.replace("/admin/leads");
-        }
       }
     });
-  }, [router, supabase.auth]);
+  }, [supabase.auth]);
 
   async function startCheckout() {
     setError("");

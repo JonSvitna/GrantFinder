@@ -9,6 +9,12 @@ export async function middleware(request: NextRequest) {
   const { supabase, supabaseResponse, user } = await updateSession(request);
   const pathname = request.nextUrl.pathname;
 
+  if (pathname.startsWith("/founder/checkout") && user && isAdminEmail(user.email)) {
+    const adminUrl = request.nextUrl.clone();
+    adminUrl.pathname = "/admin/leads";
+    return NextResponse.redirect(adminUrl);
+  }
+
   const needsAuth = gatedPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
   const needsAdmin = adminPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
 
@@ -63,5 +69,11 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/funding/:path*", "/tasks/:path*", "/admin/:path*"],
+  matcher: [
+    "/dashboard/:path*",
+    "/funding/:path*",
+    "/tasks/:path*",
+    "/admin/:path*",
+    "/founder/checkout",
+  ],
 };

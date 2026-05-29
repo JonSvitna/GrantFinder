@@ -10,7 +10,6 @@ import {
   signInErrorMessage,
   signUpErrorMessage,
 } from "@/lib/auth-errors";
-import { resolvePostLoginPath } from "@/lib/post-login-routing";
 
 const RESEND_COOLDOWN_SEC = 60;
 
@@ -168,12 +167,14 @@ export function AuthCredentialsForm({
     }
 
     try {
-      const path = await resolvePostLoginPath({
-        next,
-        accessToken: session.access_token,
-        email: session.user.email,
-      });
-      router.push(path);
+      const query = next ? `?next=${encodeURIComponent(next)}` : "";
+      const response = await fetch(`/api/auth/post-login${query}`);
+      if (!response.ok) {
+        router.push("/founder/checkout");
+        return;
+      }
+      const payload = (await response.json()) as { path: string };
+      router.push(payload.path);
     } catch {
       router.push("/founder/checkout");
     } finally {
