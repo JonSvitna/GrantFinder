@@ -41,8 +41,8 @@ export function signUpErrorMessage(message: string): string {
   if (lower.includes("password") && (lower.includes("short") || lower.includes("least"))) {
     return "Password must be at least 8 characters.";
   }
-  if (lower.includes("rate") || lower.includes("too many")) {
-    return "Too many attempts. Wait a minute and try again.";
+  if (lower.includes("rate") || lower.includes("too many") || lower.includes("over_email_send_rate_limit")) {
+    return "Too many emails sent. Wait a minute and try again.";
   }
   if (lower.includes("invalid api key")) {
     return "Copy fresh anon key from Supabase into `.env.local` and restart dev server.";

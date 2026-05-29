@@ -201,7 +201,7 @@ export function AuthCredentialsForm({
 
     setIsSubmitting(true);
 
-    const { error: signUpError } = await supabase.auth.signUp({
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email: email.trim(),
       password,
       options: {
@@ -213,6 +213,16 @@ export function AuthCredentialsForm({
 
     if (signUpError) {
       setError(signUpErrorMessage(signUpError.message));
+      return;
+    }
+
+    // Supabase returns success with empty identities when email already exists — no email sent.
+    if (data.user?.identities?.length === 0) {
+      setError(
+        "An account with this email already exists. Try signing in. If you never confirmed it, use “Resend confirmation” on the Sign in tab.",
+      );
+      setMode("signin");
+      setShowUnconfirmedResend(true);
       return;
     }
 
