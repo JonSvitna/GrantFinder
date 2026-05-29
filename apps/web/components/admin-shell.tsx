@@ -4,10 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 
-const navItems = [
-  { href: "/admin/leads", label: "Waitlist leads" },
-  { href: "/admin/founders", label: "Founder roster" },
-  { href: "/admin/sources", label: "Sources" },
+const navSections = [
+  {
+    label: "Overview",
+    items: [{ href: "/admin/leads", label: "Waitlist leads" }],
+  },
+  {
+    label: "Operations",
+    items: [
+      { href: "/admin/founders", label: "Founder roster" },
+      { href: "/admin/sources", label: "Source management" },
+    ],
+  },
 ];
 
 export function AdminShell({
@@ -30,37 +38,35 @@ export function AdminShell({
           <div style={{ color: "var(--navy)", fontSize: 15, fontWeight: 800 }}>SMB Funding Navigator</div>
           <div style={{ color: "var(--muted)", fontSize: 12, marginTop: 4 }}>Admin MVP</div>
         </div>
-        <nav style={{ display: "grid", gap: 6 }}>
-          {navItems.map((item) => (
-            <Link
-              key={item.href}
-              className={`admin-nav-link${pathname === item.href ? " admin-nav-link-active" : ""}`}
-              href={item.href}
-            >
-              {item.label}
-            </Link>
-          ))}
-        </nav>
+        {navSections.map((section) => (
+          <div key={section.label} className="admin-nav-section">
+            <div className="admin-nav-section-label">{section.label}</div>
+            <nav style={{ display: "grid", gap: 4 }}>
+              {section.items.map((item) => (
+                <Link
+                  key={item.href}
+                  className={`admin-nav-link${pathname === item.href ? " admin-nav-link-active" : ""}`}
+                  href={item.href}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          </div>
+        ))}
         <p style={{ color: "var(--muted)", fontSize: 11, lineHeight: 1.5, margin: 0 }}>
           Phase 2: review queue, ingestion, KPIs
         </p>
       </aside>
       <div className="app-main">
-        <header
-          className="app-topbar"
-          style={{ alignItems: "center", display: "flex", flexWrap: "wrap", gap: 12, justifyContent: "space-between" }}
-        >
-          <div>
-            <h1 className="app-topbar-title" style={{ marginTop: 0 }}>
-              {title}
-            </h1>
-            <p style={{ color: "var(--muted)", lineHeight: 1.55, margin: "6px 0 0" }}>{description}</p>
+        <header className="admin-topbar">
+          <div className="admin-topbar-copy">
+            <h1 className="admin-topbar-title">{title}</h1>
+            <p className="admin-topbar-description">{description}</p>
           </div>
-          {actions ? <div style={{ display: "flex", flexWrap: "wrap", gap: 10 }}>{actions}</div> : null}
+          {actions ? <div className="admin-topbar-actions">{actions}</div> : null}
         </header>
-        <main className="app-content" style={{ display: "grid", gap: 16 }}>
-          {children}
-        </main>
+        <main className="app-content admin-dashboard-content">{children}</main>
       </div>
     </div>
   );
