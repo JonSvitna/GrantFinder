@@ -4,10 +4,10 @@ import { Suspense, useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { AppShell } from "@/components/app-shell";
+import { AuthOtpForm } from "@/components/auth-otp-form";
 import { createClient } from "@/lib/supabase/client";
 import { fetchSubscription } from "@/lib/subscription";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 const MAX_ATTEMPTS = 15;
 
 export default function FounderWelcomePage() {
@@ -29,31 +29,51 @@ export default function FounderWelcomePage() {
 function FounderWelcomeContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
-  const [status, setStatus] = useState<"polling" | "success" | "timeout">("polling");
+  const [status, setStatus] = useState<"polling" | "success" | "timeout" | "needs_sign_in">("polling");
   const [founderNumber, setFounderNumber] = useState<number | null>(null);
+  const [prefillEmail, setPrefillEmail] = useState("");
   const [message, setMessage] = useState("Confirming your Founder Access payment...");
   const supabase = createClient();
 
   useEffect(() => {
+    const previewRaw = sessionStorage.getItem("smbfn_unlock_preview");
+    if (previewRaw) {
+      try {
+        const preview = JSON.parse(previewRaw) as { user?: { email?: string } };
+        if (preview.user?.email) {
+          setPrefillEmail(preview.user.email);
+        }
+      } catch {
+        // Ignore malformed preview payload.
+      }
+    }
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (data.user?.email) {
+        setPrefillEmail((current) => current || data.user?.email || "");
+      }
+    });
+  }, [supabase.auth]);
+
+  useEffect(() => {
+    if (!sessionId) {
+      setStatus("timeout");
+      setMessage("Missing checkout session. Return to checkout and try again.");
+      return;
+    }
+
     let attempts = 0;
     let cancelled = false;
 
     async function pollSubscription() {
       const {
-        data: { session },
+        data: { session: initialSession },
       } = await supabase.auth.getSession();
 
-      if (!session?.access_token) {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (user?.email) {
-          await supabase.auth.signInWithOtp({
-            email: user.email,
-            options: { emailRedirectTo: `${SITE_URL}/auth/callback` },
-          });
-          setMessage("Check your email for a magic link to finish signing in.");
-        }
+      if (!initialSession?.access_token) {
+        setStatus("needs_sign_in");
+        setMessage("Payment confirmed — enter your sign-in code to open your dashboard.");
+        return;
       }
 
       while (!cancelled && attempts < MAX_ATTEMPTS) {
@@ -66,9 +86,10 @@ function FounderWelcomeContent() {
           try {
             const subscription = await fetchSubscription(activeSession.access_token);
             if (subscription.status === "active") {
+              setPrefillEmail((current) => current || subscription.email);
               setFounderNumber(subscription.founder_number);
               setStatus("success");
-              setMessage("Payment confirmed. Check your email for a magic link if you are not signed in yet.");
+              setMessage("Payment confirmed. Your Founder Access is active.");
               return;
             }
           } catch {
@@ -81,21 +102,18 @@ function FounderWelcomeContent() {
 
       if (!cancelled) {
         setStatus("timeout");
-        setMessage("Payment is still processing — refresh in a minute or check your email for a magic link.");
+        setMessage("Payment is still processing — refresh in a minute or enter your sign-in code below.");
       }
     }
 
-    if (sessionId) {
-      pollSubscription();
-    } else {
-      setStatus("timeout");
-      setMessage("Missing checkout session. Return to checkout and try again.");
-    }
+    pollSubscription();
 
     return () => {
       cancelled = true;
     };
   }, [sessionId, supabase.auth]);
+
+  const showOtpForm = status === "needs_sign_in" || status === "timeout";
 
   return (
     <AppShell>
@@ -108,14 +126,29 @@ function FounderWelcomeContent() {
         {founderNumber ? (
           <p style={{ color: "var(--navy)", fontWeight: 800, margin: 0 }}>Founder #{founderNumber} of 50</p>
         ) : null}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
-          <Link className="button-primary" href="/login">
-            Go to login
-          </Link>
-          <Link className="button-secondary" href="/dashboard">
-            Open dashboard
-          </Link>
-        </div>
+
+        {showOtpForm ? (
+          <AuthOtpForm
+            defaultEmail={prefillEmail}
+            description="We'll email you a 6-digit code. Enter it here to finish signing in — works with Gmail, Outlook, and any email app."
+            heading="Sign in to your dashboard"
+            next="/dashboard"
+          />
+        ) : null}
+
+        {status === "success" ? (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+            <Link className="button-primary" href="/dashboard">
+              Open dashboard
+            </Link>
+          </div>
+        ) : status === "polling" ? null : (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 12 }}>
+            <Link className="button-secondary" href="/login">
+              Go to login
+            </Link>
+          </div>
+        )}
       </div>
     </AppShell>
   );

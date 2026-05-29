@@ -25,7 +25,7 @@ Target: ship and post **May 27, 2026**.
 | Payment | Stripe Checkout live (subscription) |
 | Tier split | Free waitlist = email updates only; paid Founders = immediate full access |
 | Pricing | $19/mo recurring; future public price $49/mo (marketing strikethrough) |
-| Auth | Supabase magic link (email only, no passwords) |
+| Auth | Supabase magic link (email only, no passwords) — **superseded:** [2026-05-28-email-otp-auth-design.md](./2026-05-28-email-otp-auth-design.md) (email OTP, cross-client) |
 | Waitlist fields | Email + first name |
 | Gating | Wizard public; dashboard/results require active subscription |
 | Paywall UX | Blurred readiness category scores; no program names or tasks until checkout |
