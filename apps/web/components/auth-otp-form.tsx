@@ -14,7 +14,24 @@ const inputStyle = {
   width: "100%",
 };
 
-function otpErrorMessage(message: string): string {
+function sendOtpErrorMessage(message: string): string {
+  const lower = message.toLowerCase();
+  if (lower.includes("invalid api key")) {
+    return "Supabase API key is invalid or out of date. Copy a fresh anon key from Project Settings → API into apps/web/.env.local and restart the dev server.";
+  }
+  if (lower.includes("rate") || lower.includes("too many")) {
+    return "Too many sign-in emails. Wait a minute and try again.";
+  }
+  if (lower.includes("email") && lower.includes("invalid")) {
+    return "That email address looks invalid. Check for typos and try again.";
+  }
+  if (lower.includes("signup") || lower.includes("signups")) {
+    return "Sign-ups are disabled for this project. Ask an admin to enable email sign-in in Supabase Auth settings.";
+  }
+  return message;
+}
+
+function verifyOtpErrorMessage(message: string): string {
   const lower = message.toLowerCase();
   if (lower.includes("rate") || lower.includes("too many")) {
     return "Too many attempts. Wait a minute and try again.";
@@ -23,6 +40,17 @@ function otpErrorMessage(message: string): string {
     return "That code didn't work. Check the latest email or request a new code.";
   }
   return message;
+}
+
+function isSupabaseConfigured(): boolean {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const anonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? "";
+  return (
+    Boolean(url && anonKey) &&
+    !url.includes("placeholder") &&
+    !anonKey.includes("placeholder") &&
+    url.includes("supabase.co")
+  );
 }
 
 export function AuthOtpForm({
@@ -59,22 +87,35 @@ export function AuthOtpForm({
   async function sendCode(targetEmail: string) {
     setError("");
     setInfo("");
+
+    if (!isSupabaseConfigured()) {
+      setError(
+        "Supabase is not configured. Set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY in apps/web/.env.local, then restart the dev server.",
+      );
+      return;
+    }
+
     setIsSubmitting(true);
 
     const { error: sendError } = await supabase.auth.signInWithOtp({
       email: targetEmail,
+      options: {
+        shouldCreateUser: true,
+      },
     });
 
     setIsSubmitting(false);
     if (sendError) {
-      setError(sendError.message);
+      setError(sendOtpErrorMessage(sendError.message));
       return;
     }
 
     setEmail(targetEmail);
     setStep("verify");
     setToken("");
-    setInfo(`We sent a 6-digit code to ${targetEmail}.`);
+    setInfo(
+      `If an account exists for ${targetEmail}, we sent a 6-digit code. Check spam and enter the code here (not a magic link).`,
+    );
     setResendCooldown(RESEND_COOLDOWN_SEC);
   }
 
@@ -97,7 +138,7 @@ export function AuthOtpForm({
 
     if (verifyError) {
       setIsSubmitting(false);
-      setError(otpErrorMessage(verifyError.message));
+      setError(verifyOtpErrorMessage(verifyError.message));
       return;
     }
 
@@ -165,6 +206,13 @@ export function AuthOtpForm({
           <p style={{ color: "var(--muted)", margin: 0 }}>
             Code sent to <strong style={{ color: "var(--navy)" }}>{email}</strong>
           </p>
+          {process.env.NODE_ENV === "development" ? (
+            <p style={{ color: "var(--muted)", fontSize: 13, lineHeight: 1.5, margin: 0 }}>
+              Dev tip: if the email has only a sign-in link and no 6-digit code, add{" "}
+              <code style={{ fontSize: 12 }}>{`{{ .Token }}`}</code> to the Magic Link template in
+              Supabase → Authentication → Email Templates. Check Auth logs under Logs → Auth.
+            </p>
+          ) : null}
           <input
             className="panel"
             inputMode="numeric"
