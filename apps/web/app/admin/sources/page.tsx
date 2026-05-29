@@ -1,54 +1,78 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AppShell } from "@/components/app-shell";
-import { api } from "@/lib/api";
-import type { Source } from "@/lib/types";
+import Link from "next/link";
+import { AdminShell } from "@/components/admin-shell";
+import { AdminKpiCard, AdminKpiGrid, AdminTable, cellStyle } from "@/components/admin-ui";
+import { api, getAccessToken } from "@/lib/api";
+import type { AdminFoundersResponse, AdminLead, Source } from "@/lib/types";
 
 export default function AdminSourcesPage() {
   const [sources, setSources] = useState<Source[]>([]);
+  const [leads, setLeads] = useState<AdminLead[]>([]);
+  const [founders, setFounders] = useState<AdminFoundersResponse | null>(null);
+  const [error, setError] = useState("");
 
   useEffect(() => {
-    api.getAdminSources().then(setSources).catch(() => setSources([]));
+    async function loadSources() {
+      const token = await getAccessToken();
+      if (!token) {
+        setError("Sign in with an admin account to view sources.");
+        return;
+      }
+      try {
+        const [sourceRows, leadRows, founderRows] = await Promise.all([
+          api.getAdminSources(token),
+          api.getAdminLeads(token),
+          api.getAdminFounders(token),
+        ]);
+        setSources(sourceRows);
+        setLeads(leadRows);
+        setFounders(founderRows);
+      } catch {
+        setError("Could not load source visibility.");
+      }
+    }
+    loadSources();
   }, []);
 
   return (
-    <AppShell>
-      <div style={{ display: "grid", gap: 20 }}>
-        <header>
-          <h1 style={{ marginBottom: 8 }}>Source management</h1>
-          <p style={{ color: "var(--muted)", lineHeight: 1.55 }}>Basic MVP visibility into official sources, seeded programs, and paperwork records.</p>
-        </header>
-        <section className="panel" style={{ overflow: "auto" }}>
-          <table style={{ borderCollapse: "collapse", minWidth: 760, width: "100%" }}>
-            <thead>
-              <tr style={{ background: "#eef5f1", textAlign: "left" }}>
-                <th style={cellStyle}>Source</th>
-                <th style={cellStyle}>Agency</th>
-                <th style={cellStyle}>Jurisdiction</th>
-                <th style={cellStyle}>Records</th>
-                <th style={cellStyle}>Last checked</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sources.map((source) => (
-                <tr key={source.id}>
-                  <td style={cellStyle}><a href={source.url} rel="noreferrer" target="_blank">{source.name}</a></td>
-                  <td style={cellStyle}>{source.agency}</td>
-                  <td style={cellStyle}>{source.jurisdiction}</td>
-                  <td style={cellStyle}>{source.program_count ?? 0} programs / {source.document_count ?? 0} docs</td>
-                  <td style={cellStyle}>{source.last_checked_at}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-      </div>
-    </AppShell>
+    <AdminShell
+      actions={
+        <Link className="button-secondary" href="/admin/leads">
+          View waitlist leads
+        </Link>
+      }
+      description="Basic MVP visibility into official sources, seeded programs, and paperwork records."
+      title="Sources"
+    >
+      {error ? <div style={{ color: "#b42318", fontWeight: 700 }}>{error}</div> : null}
+      <AdminKpiGrid>
+        <AdminKpiCard detail={`${leads.length} total signups`} label="Waitlist leads" value={String(leads.length)} />
+        <AdminKpiCard
+          detail={founders ? `${founders.cap - founders.seat_count} spots left` : "Loading seats..."}
+          label="Founder seats"
+          value={founders ? `${founders.seat_count}/${founders.cap}` : "—"}
+        />
+        <AdminKpiCard detail="Seeded Maryland data" label="Active sources" value={String(sources.length)} />
+      </AdminKpiGrid>
+      <AdminTable headers={["Source", "Agency", "Jurisdiction", "Records", "Last checked"]}>
+        {sources.map((source) => (
+          <tr key={source.id}>
+            <td style={cellStyle}>
+              <a href={source.url} rel="noreferrer" target="_blank">
+                {source.name}
+              </a>
+            </td>
+            <td style={cellStyle}>{source.agency}</td>
+            <td style={cellStyle}>{source.jurisdiction}</td>
+            <td style={cellStyle}>
+              {source.program_count ?? 0} programs / {source.document_count ?? 0} docs
+            </td>
+            <td style={cellStyle}>{source.last_checked_at}</td>
+          </tr>
+        ))}
+      </AdminTable>
+    </AdminShell>
   );
 }
-
-const cellStyle = {
-  borderBottom: "1px solid var(--border)",
-  padding: 14,
-};

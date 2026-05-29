@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { api, getAccessToken } from "@/lib/api";
@@ -13,8 +14,8 @@ const navItems = [
 ];
 
 export function AuthenticatedShell({ children }: { children: ReactNode }) {
-  const [welcome, setWelcome] = useState("Welcome back");
-  const [businessName, setBusinessName] = useState("");
+  const pathname = usePathname();
+  const [headerTitle, setHeaderTitle] = useState("Welcome back");
   const supabase = createClient();
 
   useEffect(() => {
@@ -26,21 +27,20 @@ export function AuthenticatedShell({ children }: { children: ReactNode }) {
           data: { user },
         } = await supabase.auth.getUser();
         if (user?.email) {
-          setWelcome(user.email);
+          setHeaderTitle(user.email);
         }
         return;
       }
 
       try {
         const dashboard = await api.getDashboard(userId, token);
-        setWelcome(dashboard.user.email);
-        setBusinessName(dashboard.profile.business_name);
+        setHeaderTitle(dashboard.profile.business_name || dashboard.user.email);
       } catch {
         const {
           data: { user },
         } = await supabase.auth.getUser();
         if (user?.email) {
-          setWelcome(user.email);
+          setHeaderTitle(user.email);
         }
       }
     }
@@ -54,39 +54,35 @@ export function AuthenticatedShell({ children }: { children: ReactNode }) {
   }
 
   return (
-    <div style={{ display: "grid", minHeight: "100vh", gridTemplateColumns: "240px 1fr" }}>
-      <aside style={{ background: "var(--navy)", color: "white", display: "grid", gap: 24, padding: 24 }}>
-        <Link href="/" style={{ color: "white", fontSize: 18, fontWeight: 800 }}>
-          SMB Funding Navigator
-        </Link>
-        <nav style={{ display: "grid", gap: 10 }}>
+    <div className="app-layout">
+      <aside className="app-sidebar">
+        <div className="app-sidebar-brand">
+          <Link className="app-sidebar-title" href="/">
+            SMB Funding Navigator
+          </Link>
+          <div className="app-sidebar-subtitle">Maryland MVP</div>
+        </div>
+        <nav className="app-nav">
           {navItems.map((item) => (
             <Link
               key={item.href}
+              className={`app-nav-link${pathname === item.href || pathname.startsWith(`${item.href}/`) ? " app-nav-link-active" : ""}`}
               href={item.href}
-              style={{ color: "rgba(255,255,255,0.88)", fontSize: 15, fontWeight: 700 }}
             >
               {item.label}
             </Link>
           ))}
         </nav>
-        <button
-          className="button-secondary"
-          onClick={signOut}
-          style={{ justifySelf: "start" }}
-          type="button"
-        >
+        <button className="button-secondary" onClick={signOut} style={{ justifySelf: "start" }} type="button">
           Sign out
         </button>
       </aside>
-      <div>
-        <header style={{ borderBottom: "1px solid var(--border)", background: "rgba(255,255,255,0.92)" }}>
-          <div className="page-shell" style={{ paddingBottom: 16, paddingTop: 16 }}>
-            <div style={{ color: "var(--muted)", fontSize: 14, fontWeight: 700 }}>Founder dashboard</div>
-            <h1 style={{ color: "var(--navy)", fontSize: 28, margin: "6px 0 0" }}>{businessName || welcome}</h1>
-          </div>
+      <div className="app-main">
+        <header className="app-topbar">
+          <div className="app-topbar-label">Founder dashboard</div>
+          <h1 className="app-topbar-title">{headerTitle}</h1>
         </header>
-        <main className="page-shell">{children}</main>
+        <main className="app-content">{children}</main>
       </div>
     </div>
   );
