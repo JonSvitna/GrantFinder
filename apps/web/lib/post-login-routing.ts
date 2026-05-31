@@ -1,12 +1,5 @@
+import { isProductPath } from "@/lib/navigation";
 import { fetchSubscription, isAdminEmail } from "@/lib/subscription";
-
-const GATED_PRODUCT_PATHS = ["/dashboard", "/funding", "/tasks"];
-
-function isGatedProductPath(path: string): boolean {
-  return GATED_PRODUCT_PATHS.some(
-    (prefix) => path === prefix || path.startsWith(`${prefix}/`)
-  );
-}
 
 export async function resolvePostLoginPath(options: {
   next?: string | null;
@@ -32,14 +25,14 @@ export async function resolvePostLoginPath(options: {
   }
 
   if (isAdminEmail(email)) {
-    if (normalizedNext && isGatedProductPath(normalizedNext)) {
+    if (normalizedNext && isProductPath(normalizedNext)) {
       return normalizedNext;
     }
     return "/admin/leads";
   }
 
   if (subscriptionStatus === "active") {
-    if (normalizedNext && isGatedProductPath(normalizedNext)) {
+    if (normalizedNext && isProductPath(normalizedNext)) {
       return normalizedNext;
     }
     return "/dashboard";

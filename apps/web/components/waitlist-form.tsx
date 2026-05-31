@@ -89,7 +89,7 @@ export function WaitlistForm({
       </div>
       {error ? <div style={{ color: "#b42318", fontWeight: 700 }}>{error}</div> : null}
       <button
-        className={isHero ? "button-navy" : isSubscribe ? "button-blue" : "button-primary"}
+        className={isHero ? "button-navy" : "button-primary"}
         disabled={isSubmitting}
         type="submit"
       >

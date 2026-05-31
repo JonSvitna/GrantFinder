@@ -3,20 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-
-const navSections = [
-  {
-    label: "Overview",
-    items: [{ href: "/admin/leads", label: "Waitlist leads" }],
-  },
-  {
-    label: "Operations",
-    items: [
-      { href: "/admin/founders", label: "Founder roster" },
-      { href: "/admin/sources", label: "Source management" },
-    ],
-  },
-];
+import { ADMIN_NAV } from "@/lib/navigation";
 
 export function AdminShell({
   children,
@@ -38,9 +25,9 @@ export function AdminShell({
           <div style={{ color: "var(--navy)", fontSize: 15, fontWeight: 800 }}>SMB Funding Navigator</div>
           <div style={{ color: "var(--muted)", fontSize: 12, marginTop: 4 }}>Admin MVP</div>
         </div>
-        {navSections.map((section) => (
-          <div key={section.label} className="admin-nav-section">
-            <div className="admin-nav-section-label">{section.label}</div>
+        {ADMIN_NAV.map((section) => (
+          <div key={section.section} className="admin-nav-section">
+            <div className="admin-nav-section-label">{section.section}</div>
             <nav style={{ display: "grid", gap: 4 }}>
               {section.items.map((item) => (
                 <Link

@@ -22,7 +22,7 @@ export function ProgramCard({ program }: { program: Program }) {
 export function DocumentCard({ document }: { document: DocumentItem }) {
   return (
     <article className="panel" style={{ display: "grid", gap: 10, padding: 18 }}>
-      <div style={{ color: "var(--blue)", fontSize: 13, fontWeight: 800, textTransform: "uppercase" }}>{document.category}</div>
+      <div style={{ color: "var(--green)", fontSize: 13, fontWeight: 800, textTransform: "uppercase" }}>{document.category}</div>
       <h3 style={{ margin: 0 }}>{document.name}</h3>
       <p style={{ color: "var(--muted)", lineHeight: 1.55, margin: 0 }}>{document.summary}</p>
       <Link className="button-secondary" href={`/paperwork/${document.id}`} style={{ width: "fit-content" }}>
@@ -37,7 +37,7 @@ export function TaskRow({ task }: { task: TaskItem }) {
     <div className="panel" style={{ alignItems: "start", display: "grid", gap: 8, padding: 16 }}>
       <strong>{task.title}</strong>
       <p style={{ color: "var(--muted)", lineHeight: 1.5, margin: 0 }}>{task.description}</p>
-      <span style={{ color: task.status === "complete" ? "var(--green)" : "var(--blue)", fontSize: 13, fontWeight: 800 }}>{task.status}</span>
+      <span style={{ color: taskStatusColor(task.status), fontSize: 13, fontWeight: 800 }}>{formatTaskStatus(task.status)}</span>
     </div>
   );
 }
@@ -57,7 +57,7 @@ function taskStatusColor(status: string) {
     return "var(--green)";
   }
   if (status === "in_progress") {
-    return "var(--blue)";
+    return "var(--navy)";
   }
   return "var(--muted)";
 }

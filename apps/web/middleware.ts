@@ -1,9 +1,35 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { ADMIN_PATHS, PRODUCT_PATHS, resolveRoleHome } from "@/lib/navigation";
 import { updateSession } from "@/lib/supabase/middleware";
 import { fetchSubscription, isAdminEmail } from "@/lib/subscription";
 
-const gatedPaths = ["/dashboard", "/funding", "/tasks"];
-const adminPaths = ["/admin/leads", "/admin/founders", "/admin/sources"];
+function matchesPath(pathname: string, paths: string[]): boolean {
+  return paths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+}
+
+async function resolveHasActiveSub(
+  supabase: Awaited<ReturnType<typeof updateSession>>["supabase"],
+  user: NonNullable<Awaited<ReturnType<typeof updateSession>>["user"]>
+): Promise<boolean> {
+  if (isAdminEmail(user.email)) {
+    return true;
+  }
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  if (!session?.access_token) {
+    return false;
+  }
+
+  try {
+    const subscription = await fetchSubscription(session.access_token);
+    return subscription.status === "active";
+  } catch {
+    return false;
+  }
+}
 
 export async function middleware(request: NextRequest) {
   const { supabase, supabaseResponse, user } = await updateSession(request);
@@ -15,8 +41,17 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(adminUrl);
   }
 
-  const needsAuth = gatedPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
-  const needsAdmin = adminPaths.some((path) => pathname === path || pathname.startsWith(`${path}/`));
+  if (user && (pathname === "/" || pathname === "/login")) {
+    const isAdmin = isAdminEmail(user.email);
+    const hasActiveSub = await resolveHasActiveSub(supabase, user);
+    const homeUrl = request.nextUrl.clone();
+    homeUrl.pathname = resolveRoleHome({ isAdmin, hasActiveSub });
+    homeUrl.search = "";
+    return NextResponse.redirect(homeUrl);
+  }
+
+  const needsAuth = matchesPath(pathname, PRODUCT_PATHS);
+  const needsAdmin = matchesPath(pathname, ADMIN_PATHS);
 
   if (!needsAuth && !needsAdmin) {
     return supabaseResponse;
@@ -70,8 +105,11 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/",
+    "/login",
     "/dashboard/:path*",
     "/funding/:path*",
+    "/paperwork/:path*",
     "/tasks/:path*",
     "/admin/:path*",
     "/founder/checkout",

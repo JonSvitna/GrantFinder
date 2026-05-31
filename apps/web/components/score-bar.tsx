@@ -11,7 +11,7 @@ export function ScoreBar({
   reason?: string;
   compact?: boolean;
 }) {
-  const color = score >= 75 ? "var(--green)" : score >= 50 ? "var(--blue)" : "#b45309";
+  const color = score >= 75 ? "var(--green)" : score >= 50 ? "var(--navy)" : "#b45309";
 
   if (compact) {
     return (
@@ -59,7 +59,7 @@ export function ScoreBar({
 }
 
 export function OverallScoreGauge({ score }: { score: number }) {
-  const color = score >= 75 ? "var(--green)" : score >= 50 ? "var(--blue)" : "#b45309";
+  const color = score >= 75 ? "var(--green)" : score >= 50 ? "var(--navy)" : "#b45309";
 
   return (
     <div className="dashboard-overall panel">
@@ -68,7 +68,7 @@ export function OverallScoreGauge({ score }: { score: number }) {
         <span className="dashboard-overall-caption">On track</span>
       </div>
       <strong style={{ color: "var(--navy)", fontSize: 16 }}>Overall readiness score</strong>
-      <Link href="/dashboard" style={{ color: "var(--blue)", fontSize: 13, fontWeight: 700 }}>
+      <Link href="/dashboard" style={{ color: "var(--green)", fontSize: 13, fontWeight: 700 }}>
         See dashboard
       </Link>
     </div>
